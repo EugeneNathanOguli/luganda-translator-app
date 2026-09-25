@@ -145,17 +145,21 @@ def load_translation_data() -> None:
     except (OSError, json.JSONDecodeError):
         return
 
+    phrase_keys = set()
     for entry in data.get("phrases", []):
         english = str(entry.get("en", "")).strip().lower()
         luganda = str(entry.get("lg", "")).strip()
         if english and luganda:
-            PHRASEBOOK.setdefault(english, luganda)
+            phrase_keys.add(english)
+            PHRASEBOOK[english] = luganda
 
     for entry in data.get("words", []):
         english = str(entry.get("en", "")).strip().lower()
         luganda = str(entry.get("lg", "")).strip()
         if english and luganda:
-            WORDBOOK.setdefault(english, luganda)
+            WORDBOOK[english] = luganda
+            if english not in phrase_keys:
+                PHRASEBOOK.pop(english, None)
 
 
 load_translation_data()
@@ -165,6 +169,8 @@ def local_translate(text: str) -> tuple[str, str]:
     normalized = " ".join(text.lower().strip().split())
     if normalized in PHRASEBOOK:
         return PHRASEBOOK[normalized], "Phrasebook match"
+    if " " not in normalized and normalized in WORDBOOK:
+        return WORDBOOK[normalized], "Phrasebook word match"
     words = normalized.split(" ")
     translated = []
     matched = 0
