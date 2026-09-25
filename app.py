@@ -5,6 +5,7 @@ import json
 import urllib.parse
 import urllib.request
 from datetime import datetime
+from pathlib import Path
 
 import streamlit as st
 
@@ -134,6 +135,30 @@ WORDBOOK = {
     "red": "myufu", "blue": "bbulu", "green": "kiragala", "yellow": "kyenvu", "black": "nzirugavu",
     "white": "weru", "brown": "kitaka",
 }
+
+
+def load_translation_data() -> None:
+    data_path = Path(__file__).parent / "data" / "translations.json"
+    try:
+        with data_path.open(encoding="utf-8") as data_file:
+            data = json.load(data_file)
+    except (OSError, json.JSONDecodeError):
+        return
+
+    for entry in data.get("phrases", []):
+        english = str(entry.get("en", "")).strip().lower()
+        luganda = str(entry.get("lg", "")).strip()
+        if english and luganda:
+            PHRASEBOOK.setdefault(english, luganda)
+
+    for entry in data.get("words", []):
+        english = str(entry.get("en", "")).strip().lower()
+        luganda = str(entry.get("lg", "")).strip()
+        if english and luganda:
+            WORDBOOK.setdefault(english, luganda)
+
+
+load_translation_data()
 
 
 def local_translate(text: str) -> tuple[str, str]:
